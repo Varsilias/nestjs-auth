@@ -19,16 +19,20 @@ export class UsersService {
   ) { }
   
   async register(createUserDto: CreateUserDto): Promise<ResponseWrapper> {
+    try {
+      const password = await bcrypt.hash(createUserDto.password, parseInt(this.configService.get('SALT')));
+      const newUser = this.usersRepository.create({ ...createUserDto, password });
+      const user = await this.usersRepository.save(newUser);
+  
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'User created successfully',
+        error: false,
+        data: this.destructureResponse(user)
+      }
 
-    const password = await bcrypt.hash(createUserDto.password, parseInt(this.configService.get('SALT')));
-    const newUser = this.usersRepository.create({ ...createUserDto, password });
-    const user = await this.usersRepository.save(newUser);
-
-    return {
-      statusCode: HttpStatus.CREATED,
-      message: 'User created successfully',
-      error: false,
-      data: this.destructureResponse(user)
+    } catch (error) {
+      throw new HttpException('A user with this uername or email already exists', HttpStatus.CONFLICT);
     }
   }
 

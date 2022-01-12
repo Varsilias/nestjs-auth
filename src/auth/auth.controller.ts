@@ -37,7 +37,7 @@ export class AuthController {
     @HttpCode(200)
     @Get('profile')
     getProfile(@Request() request) {
-        return request.user;
+        return this.authService.getUserDetails(request.user.id);
     }
 
     @UseGuards(JwtAuthGuard) 

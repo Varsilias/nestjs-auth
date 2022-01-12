@@ -41,9 +41,9 @@ export class AuthService {
         const payload = { username: user.username, sub: user.id };
         const refreshToken = await this.getRefreshTokenCookie(user.id);
         await this.usersService.setCurrentRefreshToken(refreshToken, user.id);
-        return {
+        return { 
             accessToken: this.jwtService.sign(payload),
-            expiresIn: `${this.configService.get('JWT_ACCESS_TOKEN_EXPIRY')}s`,
+            expiresIn: `${parseInt(this.configService.get('JWT_ACCESS_TOKEN_EXPIRY'))}s`,
             refreshToken,
             user
         };
@@ -53,26 +53,35 @@ export class AuthService {
         const payload = { id };
         const refreshToken = this.jwtService.sign(payload, {
             secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
-            expiresIn: `${this.configService.get('JWT_REFRESH_TOKEN_EXPIRY')}s`
+            expiresIn: parseInt(this.configService.get('JWT_REFRESH_TOKEN_EXPIRY'))
         }) 
 
         return refreshToken;
     }
 
     async getNewRefreshToken(refreshToken: string) {
-        try {
-            const verifiedToken = this.jwtService.verify(refreshToken, {
-                secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
-            })
-            const { id } = verifiedToken
-            const user = await this.usersService.getUserIfRefreshTokenMatches(refreshToken, id)
-            return this.login(await this.removeEncryptedData(user))
-        } catch (error) {
-            throw new HttpException('Refresh token has expired', HttpStatus.BAD_REQUEST);
+        if (!refreshToken) {
+            throw new HttpException('Refresh Token not provided', HttpStatus.BAD_REQUEST);
+        } else {
+
+            try {
+                const verifiedToken = this.jwtService.verify(refreshToken, {
+                    secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
+                })
+                const { id } = verifiedToken
+                const user = await this.usersService.getUserIfRefreshTokenMatches(refreshToken, id)
+                return this.login(await this.removeEncryptedData(user))
+            } catch (error) {
+                throw new HttpException('Invalid Token provided', HttpStatus.BAD_REQUEST);
+            }
         }
+        
         
     }
 
+    async getUserDetails(id: number) {
+        return await this.removeEncryptedData(await this.usersService.findOne(id));
+    }
     async logoutUser(userId: number) {
         return await this.usersService.removeRefreshToken(userId);
     }
