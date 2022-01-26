@@ -3,25 +3,28 @@ import { Controller, Request, Post, Get, Body, UseGuards, UsePipes, ValidationPi
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { TokenDto } from './dto/token.dto';
 import { HttpCode } from '@nestjs/common';
-import { TokenPayload } from './token-payload';
 
 @Controller('auth')
 export class AuthController {
+
     constructor(
         private readonly authService: AuthService,
     ) { }
+    
     @UsePipes(ValidationPipe)
     @Post('register')
     async registerUser(@Body() createUserDto: CreateUserDto) {
         return await this.authService.register(createUserDto)
     }
 
+    @UsePipes(ValidationPipe)
     @HttpCode(200)
     @Post('refresh')
-    async refresh(@Body() tokenPayload: TokenPayload) {
-        return await this.authService.getNewRefreshToken(tokenPayload.refreshToken);
+    async refresh(@Body() tokenDto: TokenDto) {
+        return await this.authService.getNewRefreshToken(tokenDto.refreshToken);
     }
 
 

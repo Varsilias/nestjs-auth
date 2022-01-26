@@ -19,8 +19,7 @@ export class AuthService {
     ) { }
 
     async register(createUserDto: CreateUserDto) {
-        const newUser = await this.usersService.register(createUserDto);
-        return newUser;
+        return await this.usersService.register(createUserDto);
     }
 
     async validateUser(username: string, password: string): Promise<any> {
@@ -60,27 +59,22 @@ export class AuthService {
     }
 
     async getNewRefreshToken(refreshToken: string) {
-        if (!refreshToken) {
-            throw new HttpException('Refresh Token not provided', HttpStatus.BAD_REQUEST);
-        } else {
+        try {
+            const verifiedToken = this.jwtService.verify(refreshToken, {
+                secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
+            })
+            const { id } = verifiedToken
+            const user = await this.usersService.getUserIfRefreshTokenMatches(refreshToken, id)
+            return this.login(await this.removeEncryptedData(user))
 
-            try {
-                const verifiedToken = this.jwtService.verify(refreshToken, {
-                    secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
-                })
-                const { id } = verifiedToken
-                const user = await this.usersService.getUserIfRefreshTokenMatches(refreshToken, id)
-                return this.login(await this.removeEncryptedData(user))
-            } catch (error) {
-                throw new HttpException('Invalid Token provided', HttpStatus.BAD_REQUEST);
-            }
+        } catch (error) {
+            throw new HttpException('Invalid Token provided', HttpStatus.BAD_REQUEST);
         }
-        
-        
     }
 
     async getUserDetails(id: number) {
-        return await this.removeEncryptedData(await this.usersService.findOne(id));
+        const user = await this.usersService.findOne(id);
+        return await this.removeEncryptedData(user);
     }
     async logoutUser(userId: number) {
         return await this.usersService.removeRefreshToken(userId);
@@ -91,7 +85,6 @@ export class AuthService {
         if (!isPasswordMatching) {
             throw new HttpException('Wrong credentials provided', HttpStatus.BAD_REQUEST);
         }
-        
         return isPasswordMatching;
     }
 

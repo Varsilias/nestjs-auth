@@ -83,7 +83,6 @@ export class UsersService {
   }
 
   async getUserIfRefreshTokenMatches(refreshToken: string, userId: number) {
-    try {
         const user = await this.findOne(userId);
         const isRefreshTokenMatching = await bcrypt.compare(
           refreshToken,
@@ -92,10 +91,7 @@ export class UsersService {
         if (!isRefreshTokenMatching) {
           throw new HttpException("Refresh token mismatch", HttpStatus.BAD_REQUEST);
         }
-        return user;
-    } catch (error) {
-      throw new HttpException("Refresh token mismatch", HttpStatus.BAD_REQUEST);
-    } 
+        return user
   }
   
   private destructureResponse(response: User): Object {
