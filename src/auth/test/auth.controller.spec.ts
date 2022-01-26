@@ -1,12 +1,9 @@
 /* eslint-disable */
 
-import { APP_GUARD } from "@nestjs/core";
 import { Test, TestingModule } from "@nestjs/testing";
 import { CreateUserDto } from "../../users/dto/create-user.dto";
 import { AuthController } from "../auth.controller";
 import { AuthService } from "../auth.service";
-import { JwtAuthGuard } from "../guards/jwt-auth.guard";
-import { LocalAuthGuard } from "../guards/local-auth.guard";
 
 describe('AuthController Test Suites', ()  => {
   let controller: AuthController;
